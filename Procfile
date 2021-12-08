@@ -1,0 +1,1 @@
+web: java -jar target/bulls_and_cows_game_bot-1.0-SNAPSHOT-jar-with-dependencies.jar
