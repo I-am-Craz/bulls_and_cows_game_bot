@@ -3,14 +3,23 @@ package org.telegram;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
 
-    int userAnswer = 0;
-    int target =  0;
-    int tryCounter = 1;
-    int hintCount = 4;
+    private static String lang = "en";
+    private static int userAnswer = 0;
+    private static int target =  0;
+    private static int tryCounter = 1;
+    private static int hintCount = 4;
+
 
     @Override
     public void onUpdateReceived(Update update){
@@ -22,7 +31,7 @@ public class Bot extends TelegramLongPollingBot {
 
         if(command.equals("/start")){
 
-            sendMessageToUser(botMessageSender, "Привет! Чтобы начать новую игру введи команду /play. Хочешь посмотреть список всех команд - введи /help .");
+            sendMessageToUser(botMessageSender, "Hi. To change the language, type /settings,\n /play - to start a new game,\n /help - to list all commands.\n\nПривет. Чтобы сменить язык  введи /settings,\n /play - чтобы начать новую игру,\n /help - чтобы посмотреть список всех команд.");
 
         }
         else if(command.equals("/play")){
@@ -32,15 +41,15 @@ public class Bot extends TelegramLongPollingBot {
             tryCounter = 0;
             hintCount = 4;
 
-            sendMessageToUser(botMessageSender, "Хочешь начать новую игру? Поехали! Вводи четырёхзначное число.");
+            sendMessageToUser(botMessageSender, Language.GAME_START.getPhrase(lang));
 
         }
         else if(command.equals("/give_up")){
 
             if(target != 0 ){
-                sendMessageToUser(botMessageSender, "Что, сдаёшься так быстро?)) Было загадано число: " + target + "\n" + "Сыграем ещё?");
+                sendMessageToUser(botMessageSender, Language.GIVE_UP.getPhrase(lang) + "\n" + Language.LETS_PLAY_AGAIN.getPhrase(lang));
             } else {
-                sendMessageToUser(botMessageSender, "Мы ёще даже не начали новую игру, а ты уже сдаёшься...Чтобы начать новую игру используй команду /play . ");
+                sendMessageToUser(botMessageSender, Language.GETTING_HINT_ERROR1.getPhrase(lang));
             }
 
         }
@@ -50,13 +59,44 @@ public class Bot extends TelegramLongPollingBot {
                 getHint(botMessageSender, hintCount);
                 hintCount--;
             } else {
-                sendMessageToUser(botMessageSender, " Я не могу создать подсказку из ничего. Чтобы её получить нужно начать новую игру ( /play ) !");
+                sendMessageToUser(botMessageSender, Language.GETTING_HINT_ERROR2.getPhrase(lang));
             }
 
         }
         else if(command.equals("/help")){
 
-            sendMessageToUser(botMessageSender, "/play - начать новую игру;" + "\n" + "/give_up - узнать, какое число было загадано;" + "\n" + "/hint - подсказка.");
+            sendMessageToUser(botMessageSender, Language.HELP.getPhrase(lang));
+
+        }
+        else if(command.equals("/settings")){
+
+            setLanguage(botMessageSender);
+
+        }
+        else if(command.equals("Russian")){
+
+            lang = "ru";
+            botMessageSender.setText("Язык изменен.");
+            botMessageSender.setReplyMarkup(new ReplyKeyboardRemove(true));
+
+            try{
+                execute(botMessageSender);
+            } catch (TelegramApiException ex){
+                System.out.println(ex.getMessage());
+            }
+
+        }
+        else if(command.equals("English")){
+
+            lang = "en";
+            botMessageSender.setText("The language has been changed.");
+            botMessageSender.setReplyMarkup(new ReplyKeyboardRemove(true));
+
+            try{
+                execute(botMessageSender);
+            } catch (TelegramApiException ex){
+                System.out.println(ex.getMessage());
+            }
 
         }
         else if(Integer.parseInt(command) > 999 & Integer.parseInt(command) < 10000){
@@ -64,22 +104,34 @@ public class Bot extends TelegramLongPollingBot {
             userAnswer = Integer.parseInt(command);
 
             if(Game.getBulls(target, userAnswer) == 4){
-                sendMessageToUser(botMessageSender,"Поздравляю!" + "\n" + "Количество попыток : " + (tryCounter + 1) + "." + "\n" + "Использовано подсказок : " + (4 - hintCount) + ".");
+                sendMessageToUser(botMessageSender,Language.GAME_RESULT.getPhrase(lang) + (tryCounter + 1) + "." + Language.HINTS_USED.getPhrase(lang) + (4 - hintCount) + "." + "\n" + Language.LETS_PLAY_AGAIN.getPhrase(lang));
                 userAnswer = 0;
                 target = Game.getRandomNum();
                 tryCounter = 0;
                 hintCount = 4;
             }
             else {
-                sendMessageToUser(botMessageSender, "Коров : " + Game.getCows(target, userAnswer) + "\n" + "Быков : " + Game.getBulls(target, userAnswer));
+                sendMessageToUser(botMessageSender, Language.COWS.getPhrase(lang) + Game.getCows(target, userAnswer) + "\n" + Language.BULLS.getPhrase(lang) + Game.getBulls(target, userAnswer));
                 tryCounter += 1;
             }
 
         }
         else{
-            sendMessageToUser(botMessageSender, "Я не понимаю тебя :( ." + "\n" + "Либо используй команду /help, чтобы посмотреть полный список команд, либо введи четырёхзначное число.");
+            sendMessageToUser(botMessageSender, Language.ERROR.getPhrase(lang));
         }
+
     }
+
+    @Override
+    public String getBotToken(){
+        return "2125237304:AAFA0VFT0n9jimPhsTKobrcsguWWEt4ZJ5c";
+    }
+
+    @Override
+    public String getBotUsername(){
+        return "myCowsBullsGameBot";
+    }
+
     public void sendMessageToUser(SendMessage sm, String message){
         sm.setText(message);
         try{
@@ -97,13 +149,32 @@ public class Bot extends TelegramLongPollingBot {
         return hint;
     }
 
-    @Override
-    public String getBotToken(){
-        return "2125237304:AAFA0VFT0n9jimPhsTKobrcsguWWEt4ZJ5c";
-    }
+    public void setLanguage(SendMessage sm){
+        sm.setText("...");
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        sm.setReplyMarkup(replyKeyboardMarkup);
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(false);
 
-    @Override
-    public String getBotUsername(){
-        return "myCowsBullsGameBot";
+        List<KeyboardRow> keyboard = new ArrayList<>();
+
+        KeyboardRow keyboardFirstRow = new KeyboardRow();
+        keyboardFirstRow.add(new KeyboardButton("English"));
+
+        KeyboardRow keyboardSecondRow = new KeyboardRow();
+        keyboardSecondRow.add(new KeyboardButton("Russian"));
+
+        keyboard.add(keyboardFirstRow);
+        keyboard.add(keyboardSecondRow);
+
+        replyKeyboardMarkup.setKeyboard(keyboard);
+
+        try{
+           execute(sm);
+        } catch (TelegramApiException ex){
+            System.out.println(ex.getMessage());
+        }
+
     }
 }
