@@ -124,12 +124,12 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken(){
-        return "2125237304:AAFA0VFT0n9jimPhsTKobrcsguWWEt4ZJ5c";
+        return System.getenv("BOT_TOKEN");
     }
 
     @Override
     public String getBotUsername(){
-        return "myCowsBullsGameBot";
+        return "bUlLs_AnD_cOwS_aNoThEr_gAmE_BoT";
     }
 
     public void sendMessageToUser(SendMessage sm, String message){
