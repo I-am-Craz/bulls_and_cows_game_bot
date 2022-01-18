@@ -14,12 +14,12 @@ import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
 
+    private static final String BOT_NAME = "bUlLs_AnD_cOwS_aNoThEr_gAmE_BoT";
     private static String lang = "en";
-    private static int userAnswer = 0;
-    private static int target =  0;
+    private static int userAnswer = 0;//four-digit number
+    private static int target =  0;//the number that a user must guess
     private static int tryCounter = 1;
     private static int hintCount = 4;
-
 
     @Override
     public void onUpdateReceived(Update update){
@@ -129,7 +129,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername(){
-        return "bUlLs_AnD_cOwS_aNoThEr_gAmE_BoT";
+        return Bot.BOT_NAME;
     }
 
     public void sendMessageToUser(SendMessage sm, String message){
@@ -171,7 +171,7 @@ public class Bot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setKeyboard(keyboard);
 
         try{
-           execute(sm);
+            execute(sm);
         } catch (TelegramApiException ex){
             System.out.println(ex.getMessage());
         }
