@@ -1,7 +1,14 @@
-package org.telegram;
+package game;
+
 import java.util.ArrayList;
 
 public class Game {
+
+    public static int userAnswer = 0;//four-digit number
+    public static int target =  0;//the number that a user must guess
+    public static int tryCounter = 1;
+    public static int hintCount = 4;
+    public static StringBuilder hintStringBuilder = new StringBuilder("****");
 
     public static int getRandomNum(){
         ArrayList<Integer> numbers = new ArrayList<>();

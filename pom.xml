@@ -18,27 +18,32 @@
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-abilities</artifactId>
-            <version>5.4.0.1</version>
+            <version>LATEST</version>
         </dependency>
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots</artifactId>
-            <version>5.4.0.1</version>
+            <version>LATEST</version>
         </dependency>
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-meta</artifactId>
-            <version>5.4.0.1</version>
+            <version>LATEST</version>
+        </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambotsextensions</artifactId>
+            <version>LATEST</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.32</version>
+            <version>LATEST</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.32</version>
+            <version>LATEST</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -71,7 +76,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.telegram.Main</mainClass>
+                            <mainClass>Bot</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -81,7 +86,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.telegram.Main</mainClass>
+                            <mainClass>Bot</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
