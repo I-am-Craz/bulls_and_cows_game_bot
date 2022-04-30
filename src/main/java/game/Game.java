@@ -29,58 +29,60 @@ public class Game {
 
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
 
         for(int number : numbers){
-            sb.append(number).append("");
+            stringBuilder.append(number).append("");
         }
 
-        return Integer.valueOf(sb.toString());
+        return Integer.valueOf(stringBuilder.toString());
 
     }
 
-    /*
+    /**
      * Cows - the number of digits guessed by the user
      * without matching their position in the
      * computer's guessed number
-     *
      */
 
-    public static int getCows(int BotNumber, int userNumber){
-        ArrayList<String> cows = new ArrayList<>();
+    public static int getCows(int botNumber, int userNumber){
+        int cows = 0;
 
-        String BotNumStr = BotNumber + "";
-        String userNumStr = userNumber + "";
+        String botNumberAsString = String.valueOf(botNumber);
+        String userNumberAsString = String.valueOf(userNumber);
 
-        for(int i = 0; i < userNumStr.length(); i++){
-            String currentNumInStr = "" + userNumStr.charAt(i);
-            if(BotNumStr.contains(currentNumInStr) && BotNumStr.indexOf(currentNumInStr) != userNumStr.indexOf(currentNumInStr)){
-                cows.add(currentNumInStr);
+        for(int i = 0; i < userNumberAsString.length(); i++){
+            String currentNumberAsString = String.valueOf(userNumberAsString.charAt(i));
+            if(botNumberAsString.contains(currentNumberAsString) &&
+                botNumberAsString.indexOf(currentNumberAsString) !=
+                userNumberAsString.indexOf(currentNumberAsString)){
+                cows++;
             }
         }
 
-        return cows.size();
+        return cows;
     }
 
-    /*
+    /**
      * Bulls - the number of digits guessed with
      * matching their position
      *
      */
 
-    public static int getBulls(int BotNumber, int userNumber){
-        ArrayList<String> bulls = new ArrayList<>();
+    public static int getBulls(int botNumber, int userNumber){
+        int bulls = 0;
 
-        String BotNumStr = BotNumber + "";
-        String userNumStr = userNumber + "";
+        String botNumberAsString = String.valueOf(botNumber);
+        String userNumberAsString = String.valueOf(userNumber);
 
-        for(int i = 0; i < userNumStr.length(); i++){
-            String currentNumInStr = "" + userNumStr.charAt(i);
-            if(BotNumStr.contains(currentNumInStr) && BotNumStr.indexOf(currentNumInStr) == userNumStr.indexOf(currentNumInStr)){
-                bulls.add(currentNumInStr);
+        for(int i = 0; i < botNumberAsString.length(); i++){
+            String currentNumberAsString = String.valueOf(userNumberAsString.charAt(i));
+            if(botNumberAsString.contains(currentNumberAsString) &&
+               botNumberAsString.indexOf(currentNumberAsString) ==
+               userNumberAsString.indexOf(currentNumberAsString)){
+                bulls++;
             }
         }
-
-        return bulls.size();
+        return bulls;
     }
 }

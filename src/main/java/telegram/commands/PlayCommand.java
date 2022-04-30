@@ -9,6 +9,7 @@ import telegram.handlers.CommandsHandler;
 import telegram.services.LocalisationService;
 
 public class PlayCommand extends BotCommand {
+    private static LocalisationService localisationService = LocalisationService.getInstance();
     public PlayCommand(){
         super("play", "Start a new game.");
     }
@@ -21,7 +22,7 @@ public class PlayCommand extends BotCommand {
         Game.hintStringBuilder = new StringBuilder("****");
 
         CommandsHandler.sendMessageToUser(absSender,
-                LocalisationService.getString("gameStart"),
+                localisationService.getString("gameStart"),
                 chat.getId().toString());
     }
 

@@ -9,24 +9,24 @@ import telegram.handlers.CommandsHandler;
 import telegram.services.LocalisationService;
 
 public class HintCommand extends BotCommand {
+    private static LocalisationService localisationService = LocalisationService.getInstance();
     public HintCommand(){
         super("hint", "Get a hint.");
     }
     @Override
     public void execute(AbsSender absSender, User user, Chat chat, String[] strings){
-
         String chatId = chat.getId().toString();
         if(Game.target != 0 && Game.hintCount != 0){
             getHint(Game.hintStringBuilder, absSender, chatId, getNumIndex(absSender, chatId, strings));
             Game.hintCount--;
         } else if(Game.hintCount == 0){
             CommandsHandler.sendMessageToUser(absSender,
-                    LocalisationService.getString("noHints"),
+                    localisationService.getString("noHints"),
                     chatId);
         }
         else {
             CommandsHandler.sendMessageToUser(absSender,
-                    LocalisationService.getString("hintGettingError"),
+                    localisationService.getString("hintGettingError"),
                     chatId);
         }
 
@@ -43,13 +43,13 @@ public class HintCommand extends BotCommand {
     public static int getNumIndex(AbsSender absSender, String chatId,  String[] strings){
         if(strings == null || strings.length == 0){
             CommandsHandler.sendMessageToUser(absSender,
-                    LocalisationService.getString("positionNotEnteredError"),
+                    localisationService.getString("positionNotEnteredError"),
                     chatId);
             return -1;
         } else if(Integer.parseInt(String.join("", strings)) <= 0
                   || Integer.parseInt(String.join("", strings)) > 4){
             CommandsHandler.sendMessageToUser(absSender,
-                    LocalisationService.getString("noSuchPosition"),
+                    localisationService.getString("noSuchPosition"),
                     chatId);
             return -1;
         }

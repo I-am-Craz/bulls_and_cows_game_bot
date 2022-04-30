@@ -8,13 +8,14 @@ import telegram.handlers.CommandsHandler;
 import telegram.services.LocalisationService;
 
 public class HelpCommand  extends BotCommand {
+    private static LocalisationService localisationService = LocalisationService.getInstance();
     public HelpCommand(){
         super("help", "Get a list of all commands.");
     }
     @Override
     public void execute(AbsSender absSender, User user, Chat chat, String[] strings){
         CommandsHandler.sendMessageToUser(absSender,
-                LocalisationService.getString("helpCommand"),
+                localisationService.getString("helpCommand"),
                 chat.getId().toString());
     }
 }

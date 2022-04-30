@@ -20,8 +20,7 @@ public class SettingsCommand extends BotCommand {
     public void execute(AbsSender absSender, User user, Chat chat, String[] strings){
         selectLanguage(absSender, chat.getId().toString());
     }
-
-    public void selectLanguage(AbsSender abs, String id){
+    public synchronized void selectLanguage(AbsSender abs, String id){
         SendMessage sm = new SendMessage();
         sm.setText("...");
         sm.setChatId(id);

@@ -9,6 +9,7 @@ import telegram.handlers.CommandsHandler;
 import telegram.services.LocalisationService;
 
 public class GiveUpCommand extends BotCommand {
+    private static LocalisationService localisationService = LocalisationService.getInstance();
     public GiveUpCommand(){
         super("give_up", "Find out the number the bot guessed.");
     }
@@ -18,12 +19,12 @@ public class GiveUpCommand extends BotCommand {
         if(Game.target != 0 ){
            CommandsHandler.sendMessageToUser(
                    absSender,
-                   LocalisationService.getString("giveUp") + Game.target
-                    + "\n" + LocalisationService.getString("letsPlayAgain"),
+                   localisationService.getString("giveUp") + Game.target
+                    + "\n" + localisationService.getString("letsPlayAgain"),
                    chatId);
         } else {
             CommandsHandler.sendMessageToUser(absSender,
-                    LocalisationService.getString("giveUpError"),
+                    localisationService.getString("giveUpError"),
                     chatId);
         }
     }
