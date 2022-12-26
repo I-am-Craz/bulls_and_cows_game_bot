@@ -1,60 +1,83 @@
 package telegram.commands;
 
 import game.Game;
+import game.GameChat;
+import telegram.services.ChatService;
 import org.telegram.telegrambots.extensions.bots.commandbot.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 import telegram.handlers.CommandsHandler;
 import telegram.services.LocalisationService;
+import java.util.logging.Logger;
 
 public class HintCommand extends BotCommand {
-    private static LocalisationService localisationService = LocalisationService.getInstance();
+
     public HintCommand(){
         super("hint", "Get a hint.");
     }
+
     @Override
     public void execute(AbsSender absSender, User user, Chat chat, String[] strings){
-        String chatId = chat.getId().toString();
-        if(Game.target != 0 && Game.hintCount != 0){
-            getHint(Game.hintStringBuilder, absSender, chatId, getNumIndex(absSender, chatId, strings));
-            Game.hintCount--;
-        } else if(Game.hintCount == 0){
-            CommandsHandler.sendMessageToUser(absSender,
-                    localisationService.getString("noHints"),
-                    chatId);
-        }
-        else {
-            CommandsHandler.sendMessageToUser(absSender,
-                    localisationService.getString("hintGettingError"),
-                    chatId);
-        }
+        Long chatId = chat.getId();
+        GameChat gameChat = ChatService.getGameChats().get(chat.getId());
 
+        if(gameChat == null){
+            CommandsHandler.sendMessageToUser(absSender,
+                    "You need to enter the /start command to initialize the game.\n\n" +
+                            "Для инициализации игры необходимо ввести команду /start.",
+                    chat.getId().toString());
+        }
+        else{
+            Game game = gameChat.getGame();
+
+            if(game.isStarted() && game.getTarget() != 0 && game.getHintsCount() != 0){
+                getHint(game, absSender, chatId.toString(),
+                        getHintPosition(absSender, gameChat, strings));
+
+                game.decrementHintsCount();
+            }
+            else if(game.isStarted() &&  game.getHintsCount() == 0){
+                CommandsHandler.sendMessageToUser(absSender,
+                        LocalisationService.getString("noHints", gameChat.getCurrentLanguageCode()),
+                        chatId.toString());
+            }
+            else {
+                CommandsHandler.sendMessageToUser(absSender,
+                        LocalisationService.getString("hintGettingError", gameChat.getCurrentLanguageCode()),
+                        chatId.toString());
+            }
+        }
     }
 
-    public static void getHint(StringBuilder sb, AbsSender absSender, String chatId, int position){
+    public static void getHint(Game game, AbsSender absSender, String chatId, int position){
         try{
-            sb.setCharAt(position - 1, String.valueOf(Game.target).charAt(position - 1));
-            CommandsHandler.sendMessageToUser(absSender, sb.toString(), chatId);
+            game.getHintString().setCharAt(position - 1,
+                    String.valueOf(game.getTarget()).charAt(position - 1));
+
+            CommandsHandler.sendMessageToUser(absSender, game.getHintString().toString(), chatId);
         }
-        catch (StringIndexOutOfBoundsException e){}
+        catch(StringIndexOutOfBoundsException e){
+            Logger.getLogger("main").finer(e.getMessage());
+        }
     }
 
-    public static int getNumIndex(AbsSender absSender, String chatId,  String[] strings){
+    public static int getHintPosition(AbsSender absSender, GameChat chat,  String[] strings){
+        int position = -1;
         if(strings == null || strings.length == 0){
             CommandsHandler.sendMessageToUser(absSender,
-                    localisationService.getString("positionNotEnteredError"),
-                    chatId);
-            return -1;
-        } else if(Integer.parseInt(String.join("", strings)) <= 0
-                  || Integer.parseInt(String.join("", strings)) > 4){
+                    LocalisationService.getString("positionNotEnteredError", chat.getCurrentLanguageCode()),
+                    chat.getId().toString());
+        }
+        else if(Integer.parseInt(String.join("", strings)) <= 0
+                || Integer.parseInt(String.join("", strings)) > 4){
             CommandsHandler.sendMessageToUser(absSender,
-                    localisationService.getString("noSuchPosition"),
-                    chatId);
-            return -1;
+                    LocalisationService.getString("noSuchPosition", chat.getCurrentLanguageCode()),
+                    chat.getId().toString());
         }
         else {
-            return Integer.parseInt(String.join("", strings));
+            position = Integer.parseInt(String.join("", strings));
         }
+        return position;
     }
 }

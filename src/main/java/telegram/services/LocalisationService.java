@@ -2,32 +2,27 @@ package telegram.services;
 
 import java.util.*;
 
-public class LocalisationService {
-    private volatile String currentLanguage = "en";
-    private static final String STRINGS_FILE = "strings";
+public class LocalisationService{
+    private static final Object lock = new Object();
+    private static final String BASE_NAME = "strings";
+    private static final ResourceBundle english;
+    private static final ResourceBundle russian;
 
-    private static LocalisationService instance;
-
-    private LocalisationService(){}
-
-    public static LocalisationService getInstance(){
-        if(instance == null) {
-            instance = new LocalisationService();
+    static{
+        synchronized (lock){
+            english = ResourceBundle.getBundle(BASE_NAME, new Locale("en"));
+            russian = ResourceBundle.getBundle(BASE_NAME, new Locale("ru"));
         }
-        return instance;
     }
 
-    public String getString(String key){
-        Locale locale;
-        synchronized (currentLanguage){
-             locale = new Locale(currentLanguage);
+    public static String getString(String key, String code){
+        String phrase = "";
+        switch (code){
+            case "ru" : phrase = russian.getString(key);
+            break;
+            case "en" : phrase = english.getString(key);
+            break;
         }
-        ResourceBundle resourceBundle = ResourceBundle.getBundle(STRINGS_FILE, locale);
-        return resourceBundle.getString(key);
+        return phrase;
     }
-
-    public void setCurrentLanguage(String language){
-        currentLanguage = language;
-    }
-
 }

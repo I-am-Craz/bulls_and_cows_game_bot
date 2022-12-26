@@ -1,74 +1,99 @@
 package telegram.handlers;
 
+import game.GameChat;
 import telegram.commands.*;
 import game.Game;
+import telegram.services.ChatService;
 import org.telegram.telegrambots.extensions.bots.commandbot.TelegramLongPollingCommandBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import telegram.services.KeyboardService;
 import telegram.services.LocalisationService;
-import org.telegram.telegrambots.extensions.bots.commandbot.commands.BotCommand;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
+import java.util.logging.Logger;
 
 public class CommandsHandler extends TelegramLongPollingCommandBot{
-    private static LocalisationService localisationService = LocalisationService.getInstance();
     private static final String BOT_NAME = "bUlLs_AnD_cOwS_aNoThEr_gAmE_BoT";
-
-    private List<BotCommand> commands = new ArrayList<>();
-
-    {
-        commands.add(new StartCommand());
-        commands.add(new HelpCommand());
-        commands.add(new HintCommand());
-        commands.add(new PlayCommand());
-        commands.add(new GiveUpCommand());
-        commands.add(new SettingsCommand());
-        commands.add(new StartCommand());
-    }
+    private static final Logger logger = Logger.getLogger("main");
 
     public CommandsHandler(){
-        for(BotCommand command : commands){
-            register(command);
-        }
+        registerAll(new StartCommand(),
+                    new HelpCommand(),
+                    new HintCommand(),
+                    new PlayCommand(),
+                    new GiveUpCommand(),
+                    new SettingsCommand());
 
         registerDefaultAction(((absSender, message) -> {
-            sendMessageToUser(
-                    absSender,
-                    localisationService.getString("userInputError"),
-                    message.getChatId().toString());
+            GameChat gameChat = ChatService.getGameChats().get(message.getChatId());
+
+            if(gameChat == null) sendMessageToUser(absSender,
+                        "You need to enter the /start command to initialize the game.\n\n" +
+                                "Для инициализации игры необходимо ввести команду /start.",
+                                message.getChatId().toString());
+            else sendMessageToUser(absSender,
+                 LocalisationService.getString("userInputError", gameChat.getCurrentLanguageCode()),
+                 message.getChatId().toString());
         }));
     }
 
     @Override
-    public void processNonCommandUpdate(Update update) {
+    public void processNonCommandUpdate(Update update){
         String userMessage = update.getMessage().getText();
-        String chatId =  update.getMessage().getChatId().toString();
+        Long chatId =  update.getMessage().getChatId();
+
+        logger.info("The user in the chat room with ID " + chatId +" entered the following:\n" + userMessage);
 
         SendMessage messageSender = new SendMessage();
-        messageSender.setChatId(chatId);
+        messageSender.setChatId(chatId.toString());
 
-        if(userMessage.equals("English")){
-            changeLanguage("en", messageSender);
-        }
-        if(userMessage.equals("Russian")){
-            changeLanguage("ru", messageSender);
-        }
+        int enteredNum = getEnteredNumber(userMessage);
 
-        if(getEnteredNumber(userMessage) > 999 && getEnteredNumber(userMessage) < 10000){
-            Game.userAnswer = getEnteredNumber(userMessage);
-            if(Game.getBulls(Game.target, Game.userAnswer) == 4){
-                winTheGame(messageSender);
-            }
-            else {
-                continueTheGame(messageSender);
-            }
-        } else {
-            sendMessageToUser(messageSender, localisationService.getString("userInputError"));
+        GameChat chat = ChatService.getGameChats().get(chatId);
+        Game game = chat.getGame();
+
+        if(userMessage.equals(LocalisationService.getString("english", chat.getCurrentLanguageCode()))){
+            changeLanguage(chat, "en", messageSender);
         }
+        else if(userMessage.equals(LocalisationService.getString("russian", chat.getCurrentLanguageCode()))){
+            changeLanguage(chat, "ru", messageSender);
+        }
+        else if(userMessage.equals(LocalisationService.getString("yes", chat.getCurrentLanguageCode()))){
+            if(game.isFinished()
+                && ChatService.getGameChats().containsKey(chatId)){
+                game.reset();
+                game.setStarted(true);
+                game.setFinished(false);
+                sendMessageToUser(messageSender, LocalisationService.getString("restarted",
+                        chat.getCurrentLanguageCode()));
+            }
+            else sendMessageToUser(messageSender, LocalisationService.getString("gameStartingError",
+                    chat.getCurrentLanguageCode()));
+        }
+        else if(userMessage.equals(LocalisationService.getString("no", chat.getCurrentLanguageCode()))){
+            if(game.isFinished()
+                && ChatService.getGameChats().containsKey(chatId)){
+                game.interrupt();
+                ChatService.getGameChats().remove(chatId);
+                sendMessageToUser(messageSender, LocalisationService.getString("startCommand",
+                        chat.getCurrentLanguageCode()));
+            }
+            else sendMessageToUser(messageSender, LocalisationService.getString("gameStartingError",
+                    chat.getCurrentLanguageCode()));
+        }
+        else if(enteredNum > 999 && enteredNum < 10000){
+            game.setPlayerAnswer(enteredNum);
+            if(game.getBulls(enteredNum) == 4){
+                getGameResults(game, messageSender, chat);
+                game.setFinished(true);
+                game.setStarted(false);
+            }
+            else continueTheGame(chat, messageSender);
+        }
+        else sendMessageToUser(messageSender, LocalisationService.getString("userInputError",
+                    chat.getCurrentLanguageCode()));
     }
 
     @Override
@@ -78,7 +103,8 @@ public class CommandsHandler extends TelegramLongPollingCommandBot{
 
     @Override
     public String getBotToken() {
-        return System.getenv("BOT_TOKEN");
+        //return System.getenv("BOT_TOKEN");
+        return "5003626061:AAGihEHZO-ZxxmF1RngTHK7iWhqpeMlKUNQ";
     }
 
     public synchronized static void sendMessageToUser(AbsSender absSender, String message, String chatId){
@@ -87,17 +113,17 @@ public class CommandsHandler extends TelegramLongPollingCommandBot{
         messageSender.setChatId(chatId);
         try{
             absSender.execute(messageSender);
-        } catch(TelegramApiException ex){
-            System.out.println(ex.getMessage());
+        } catch(TelegramApiException e){
+            logger.finer(e.getMessage());
         }
     }
 
     public synchronized void sendMessageToUser(SendMessage messageSender, String message){
-        messageSender.setText(message);
+        if(!Objects.equals(message, ""))  messageSender.setText(message);
         try{
             execute(messageSender);
-        } catch(TelegramApiException ex){
-            System.out.println(ex.getMessage());
+        } catch(TelegramApiException e){
+            logger.finer(e.getMessage());
         }
     }
 
@@ -106,40 +132,53 @@ public class CommandsHandler extends TelegramLongPollingCommandBot{
         try{
             enteredNumber = Integer.parseInt(userMessage);
         } catch (NumberFormatException e){
-            System.out.println(e.getMessage());
+            logger.finer(e.getMessage());
         }
         return enteredNumber;
     }
 
-    private void changeLanguage(String languageCode, SendMessage  messageSender) {
-        localisationService.setCurrentLanguage(languageCode);
-        messageSender.setText(localisationService.getString("languageChange"));
-        messageSender.setReplyMarkup(new ReplyKeyboardRemove(true));
+    private void changeLanguage(GameChat chat, String languageCode, SendMessage  messageSender){
+        chat.setLanguageCode(languageCode);
+        messageSender.setText(LocalisationService.getString("languageChange",
+                      chat.getCurrentLanguageCode()));
         try {
             execute(messageSender);
-        } catch (TelegramApiException e) {
+        } catch (TelegramApiException e){
+            logger.finer(e.getMessage());
         }
     }
 
-    private void winTheGame(SendMessage messageSender){
+    private void getGameResults(Game game, SendMessage messageSender, GameChat chat){
+        int playerAttemptsCount = game.getPlayerAttemptsCount() + 1;
+        int hintCount = 4 - game.getHintsCount();
+
         sendMessageToUser(messageSender,
-                localisationService.getString("gameResults") +
-                        (Game.tryCounter + 1) + ".\n" +
-                        localisationService.getString("hintsUsed") +
-                        (4 - Game.hintCount) + ".\n" +
-                        localisationService.getString("letsPlayAgain"));
-        Game.userAnswer = 0;
-        Game.target = Game.getRandomNum();
-        Game.tryCounter = 0;
-        Game.hintCount = 4;
-        Game.hintStringBuilder = new StringBuilder("****");
+    LocalisationService.getString("gameResults", chat.getCurrentLanguageCode()) +
+            " " + playerAttemptsCount + ".\n" +
+            LocalisationService.getString("hintsUsed", chat.getCurrentLanguageCode()) +
+            " " + hintCount + ".\n" +
+            LocalisationService.getString("letsPlayAgain", chat.getCurrentLanguageCode()));
+
+        sendMessageToUser(KeyboardService.createKeyboard(chat.getId().toString(),
+                LocalisationService.getString("yes", chat.getCurrentLanguageCode()),
+                LocalisationService.getString("no", chat.getCurrentLanguageCode())), "");
     }
 
-    private void continueTheGame(SendMessage messageSender){
-        sendMessageToUser(messageSender, localisationService.getString("cows") +
-                Game.getCows(Game.target, Game.userAnswer) + "\n" +
-                localisationService.getString("bulls") +
-                Game.getBulls(Game.target, Game.userAnswer));
-        Game.tryCounter += 1;
+    private void continueTheGame(GameChat chat, SendMessage messageSender){
+        Game game = chat.getGame();
+
+        if(!game.isPlayerGaveUp()){
+            int playerAnswer = game.getPlayerAnswer();
+
+            sendMessageToUser(messageSender,
+        LocalisationService.getString("cows", chat.getCurrentLanguageCode()) +
+                " " + game.getCows(playerAnswer) + "\n" +
+                LocalisationService.getString("bulls", chat.getCurrentLanguageCode()) +
+                " " + game.getBulls(playerAnswer));
+
+            game.incrementPlayerAttemptsCount();
+        }
+        else sendMessageToUser(messageSender,
+             LocalisationService.getString("playerGaveUp", chat.getCurrentLanguageCode()));
     }
 }
