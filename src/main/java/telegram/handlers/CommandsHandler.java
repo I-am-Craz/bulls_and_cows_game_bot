@@ -103,8 +103,7 @@ public class CommandsHandler extends TelegramLongPollingCommandBot{
 
     @Override
     public String getBotToken() {
-        //return System.getenv("BOT_TOKEN");
-        return "5003626061:AAGihEHZO-ZxxmF1RngTHK7iWhqpeMlKUNQ";
+        return System.getenv("BOT_TOKEN");
     }
 
     public synchronized static void sendMessageToUser(AbsSender absSender, String message, String chatId){
